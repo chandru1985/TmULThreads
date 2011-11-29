@@ -1,7 +1,6 @@
 /*
  *  Author:
  *  Sasikanth.V        <sasikanth@email.com>
- *  $Id: tmr_init.c,v 1.19 2011/02/04 16:45:18 Sasi Exp $
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -45,18 +44,14 @@ int find_tmr_slot_and_place (tmr_t * ptmr)
 	unsigned int t = 0;
 	int wheel = -1;
 
-	if (GET_HRS(ct, t)) {
+	if (GET_HRS(ct, t)) 
 		wheel = HRS;
-	}
-	else if (GET_MINS (ct, t)) {
+	else if (GET_MINS (ct, t)) 
 		wheel = MIN;
-	}
-	else if (GET_SECS (ct, t)) {
+	else if (GET_SECS (ct, t)) 
 		wheel = SEC;
-	}
-	else if (GET_TICK (ct, t)) {
+	else if (GET_TICK (ct, t)) 
 		wheel = TICK;
-	}
 	
 	if (wheel >= 0) {
 		ptmr->rt = (clk[wheel] + t);
@@ -168,16 +163,10 @@ int mod_timer (int *pindex, unsigned int ticks)
 
 static int alloc_timer_id (void)
 {
-	if (indx > MAX_TIMERS) {
+	if (TIMER_COUNT() > MAX_TIMERS) {
 		return 0;
 	}
-	++indx;
-	return indx;
-}
-
-void free_timer_id ()
-{
-	--indx;
+	return ++indx;
 }
 
 int stop_timer (int idx)

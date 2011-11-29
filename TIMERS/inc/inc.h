@@ -1,19 +1,13 @@
 
-/**************************************************************************
- *  *  TechMinds's SLL LIB (C version)
- *  *-------------------------------------------------
- *  *  Copyright (C) 2008  TechMinds  (techminds@techie.com)
- *  *  
- *  *  $Id: inc.h,v 1.9 2011/01/12 16:33:33 Sasi Exp $
- *  *  
- *  *  Author     :   TechMinds
- *  *
- *  *  Description : Implementation of Generic Singly Linked List
- *  *
- *  *  Platform   :   Any
- *  *
- *  *************************************************************************/
-
+/*
+ *  Author:
+ *  Sasikanth.V        <sasikanth@email.com>
+ *
+ *  This program is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU General Public License
+ *  as published by the Free Software Foundation; either version
+ *  2 of the License, or (at your option) any later version.
+ */
 
 #include <stdio.h>
 #include <pthread.h>

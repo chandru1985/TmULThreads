@@ -1,7 +1,6 @@
 /*
  *  Author:
  *  Sasikanth.V        <sasikanth@email.com>
- *  $Id: update.c,v 1.13 2011/01/16 14:52:42 Sasi Exp $
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
@@ -17,14 +16,8 @@ tmr_t * timer_tree_walk (struct rb_root  *root, unsigned int key, char flag);
 
 static inline void timer_expiry_action (tmr_t * ptmr)
 {
-	static int i = 0;
 	if (IS_TMR_EXPD (ptmr)) {
 		DEC_TIMER_COUNT ();
-#ifdef TMR_DBG
-		printf ("TMR EXP'd @ %d.%d exp count : %d\n", clk[1],clk[0], ++i);
-#endif
-		if (!ptmr->flags & AUTO_RESTART) 
-			free_timer_id ();
 		list_add_tail (&ptmr->elist, &expd_tmrs);
 	}
 	else
@@ -51,27 +44,34 @@ static inline void process_timers (struct rb_root *root, unsigned int expires)
 
 void tm_process_tick_and_update_timers (void)
 {
-	int i = TIMER_WHEEL;
-	
-	while (--i >= 0) {
-		process_timers (&tmrrq.root[i], clk[i]);
+	process_timers (&tmrrq.root[TICK_TIMERS], clk[TICK_TIMERS]);
+
+	if (IS_NXT_SEC_HAPPEND) {
+		process_timers (&tmrrq.root[SECS_TIMERS], clk[SECS_TIMERS]);
+		if (IS_NXT_MIN_HAPPEND) {
+			process_timers (&tmrrq.root[MIN_TIMERS], clk[MIN_TIMERS]);
+			if (IS_NXT_HR_HAPPEND) {
+				process_timers (&tmrrq.root[HRS_TIMERS], clk[HRS_TIMERS]);
+			}
+		}
 	}
 }
 
 tmr_t * query_timer_tree_by_index (int idx)
 {
-	tmr_t *p = NULL;
-	int i = 0;	
+	tmr_t * p = NULL;
 
-	while (i < TIMER_WHEEL) {
-		if ((p = timer_tree_walk (&tmrrq.root[i], idx, 
-					 QUERY_TIMER_INDEX)))
-			goto find_timer;
-		i++;
-	}
-	return NULL;
-find_timer:
-	return p;
+	if ((p = timer_tree_walk (&tmrrq.root[TICK_TIMERS], idx, QUERY_TIMER_INDEX)))
+		return p;
+
+	if ((p = timer_tree_walk (&tmrrq.root[SECS_TIMERS], idx, QUERY_TIMER_INDEX)))
+		return p;
+
+	if ((p = timer_tree_walk (&tmrrq.root[MIN_TIMERS], idx, QUERY_TIMER_INDEX)))
+		return p;
+
+	if ((p = timer_tree_walk (&tmrrq.root[HRS_TIMERS], idx, QUERY_TIMER_INDEX)))
+		return p;
 }
 
 void timer_add (tmr_t *n, struct rb_root *root, int flag)

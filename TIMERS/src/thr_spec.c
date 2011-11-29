@@ -1,7 +1,6 @@
 /*
  *  Author:
  *  Sasikanth.V        <sasikanth@email.com>
- *  $Id: thr_spec.c,v 1.2 2011/01/16 14:52:42 Sasi Exp $
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
