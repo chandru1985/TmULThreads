@@ -1,0 +1,15 @@
+#!/bin/sh
+
+export CODE_DIR=$PWD
+if [ "$1" = "" ]; then
+	echo "Building TechMinds Lib"
+	make -C build
+else
+	echo "Cleaning TechMinds Lib"
+	make $1 -C build 
+fi
+if [ $? = 0 ]; then
+	echo "Sucessfully Done TechMindsLib"
+else
+	echo "Build Failure"
+fi

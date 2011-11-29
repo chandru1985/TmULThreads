@@ -1,0 +1,75 @@
+---------------------------------------------------
+int task_cancel (int taskid);
+@desc:  Cancel the taskid
+@args : task id 
+@return : return 0 on success, non zero on failure
+---------------------------------------------------
+int tm_sleep (unsigned int secs);
+@desc:  sleeps for duration in secs
+@args : secs 
+@return : return 0 on success, non zero on failure
+---------------------------------------------------
+int tm_msleep (unsigned int msecs);
+@desc:  sleep for milli secs
+@args : msecs : milli secs 
+@return : return 0 on success, non zero on failure
+---------------------------------------------------
+int wait_for_event (unsigned int events,  int *evt);
+@args : task id 
+@return : return 0 on success, non zero on failure
+---------------------------------------------------
+int post_event  (int tid, int event);
+@args : task id 
+@return : return 0 on success, non zero on failure
+---------------------------------------------------
+int tm_signal (int signo, void (*handler)(int));
+@args : task id 
+@return : return 0 on success, non zero on failure
+---------------------------------------------------
+int kill_task (int tid) ;
+@args : task id 
+@return : return 0 on success, non zero on failure
+---------------------------------------------------
+int task_selfid (void);
+@args : task id 
+@return : return 0 on success, non zero on failure
+---------------------------------------------------
+int tm_raise (int sig);
+@args : task id 
+@return : return 0 on success, non zero on failure
+---------------------------------------------------
+void cpu_yield (void);
+@args : task id 
+@return : return 0 on success, non zero on failure
+---------------------------------------------------
+int start_timer (unsigned int ticks, void *data, void (*handler) (void *), int flags);
+@args : task id 
+@return : return 0 on success, non zero on failure
+---------------------------------------------------
+int stop_timer (int idx);
+@args : task id 
+@return : return 0 on success, non zero on failure
+---------------------------------------------------
+int restart_timer (int idx);
+@args : task id 
+@return : return 0 on success, non zero on failure
+---------------------------------------------------
+unsigned int get_secs (void);
+@args : task id 
+@return : return 0 on success, non zero on failure
+---------------------------------------------------
+unsigned int get_mins (void);
+@args : task id 
+@return : return 0 on success, non zero on failure
+---------------------------------------------------
+unsigned int get_hrs (void);
+@args : task id 
+@return : return 0 on success, non zero on failure
+---------------------------------------------------
+unsigned int get_timers_count (void);
+@args : task id 
+@return : return 0 on success, non zero on failure
+---------------------------------------------------
+retval_t task_create (char tskname[], int tsk_prio, int sched_alg, int stk_size,
+	              void *(*start_routine) (void *), void (*exit_routine) (),
+		      void *arg, tmtaskid_t * rettskid)
