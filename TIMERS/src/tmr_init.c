@@ -79,8 +79,6 @@ int start_timer (unsigned int ticks, void *data, void (*handler) (void *), int f
 	tmr_t  *new = NULL;
 	int idx = 0;
 
-	(void)flags; /*XXX: for future purpose*/
-	
 	if ( !(idx = alloc_timer_id ())  || 
              !(new = alloc_timer ())) {
 		return -1;
@@ -93,6 +91,11 @@ int start_timer (unsigned int ticks, void *data, void (*handler) (void *), int f
 	new->rt = 0;
 	new->data = data;
 	new->time_out_handler = handler;
+
+	if (flags)
+		new->flags = flags;
+	else
+		new->flags = TIMER_ONCE;
 
 	calc_time (new);
 
@@ -121,7 +124,7 @@ int setup_timer (int *pindex, void (*handler) (void *), void *data)
 	new->data = data;
 	new->time_out_handler = handler;
 
-	new->flags = AUTO_RESTART;
+	new->flags = TIMER_FOREVER;
 
 	*pindex = idx;
 
@@ -160,6 +163,23 @@ int mod_timer (int *pindex, unsigned int ticks)
 
 	return 0;
 }
+
+int timer_restart  (tmr_t *p)
+{
+	if (!p)
+		return -1;
+
+	INIT_LIST_HEAD (&p->elist);
+
+	calc_time (p);
+
+	find_tmr_slot_and_place (p);
+
+	INC_TIMER_COUNT ();
+
+	return 0;
+}
+
 
 static int alloc_timer_id (void)
 {

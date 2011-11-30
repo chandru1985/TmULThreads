@@ -40,7 +40,11 @@ void process_expd_timers (void)
 
 		list_del (&ptmr->elist);
 
-		if (!(ptmr->flags & AUTO_RESTART))
+		if (ptmr->flags & TIMER_ONCE || ptmr->flags & TIMER_FOREVER) {
 			free_timer (ptmr);
+		} 
+		else if (ptmr->flags & TIMER_REPEAT) {
+			timer_restart (ptmr);
+		}
 	}
 }

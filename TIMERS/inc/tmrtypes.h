@@ -60,7 +60,9 @@ typedef struct tm_timer
 #define QUERY_TIMER_EXPIRY  0x1
 #define QUERY_TIMER_INDEX   0x2
 
-#define AUTO_RESTART  1
+#define TIMER_ONCE  	0x1
+#define TIMER_REPEAT  	0x2 
+#define TIMER_FOREVER   0x4
 
 
 /*

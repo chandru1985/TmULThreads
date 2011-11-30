@@ -40,6 +40,11 @@ void *start_rout3 (void *unused)
 
 }
 
+Just_log ()
+{
+	dump_task_info ();
+}
+
 
 int rettskid[100] ;
 
@@ -51,6 +56,8 @@ int main (int argc , char **argv)
 
 	tmlib_init ();
 	char task[4] = "TS";
+
+	start_timer (1 * tm_get_ticks_per_second (), NULL, (void (*) (void *))&Just_log, 0x2);
 
 	for ( i = 0; i <=25; i++) {
 		task[2] = (char)(97+i);
