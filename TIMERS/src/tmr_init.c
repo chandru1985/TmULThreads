@@ -72,6 +72,8 @@ static void calc_time (tmr_t * ptmr)
 	SET_SECS (ptmr->ctime,  secs);
 	SET_MINS (ptmr->ctime,  mins);
 	SET_HRS  (ptmr->ctime,  hrs);
+
+	ptmr->exp = tick + clk[TICK];
 }
 
 int start_timer (unsigned int ticks, void *data, void (*handler) (void *), int flags)
@@ -204,17 +206,6 @@ int stop_timer (int idx)
 
 	return 0;
 }
-
-int timer_pending (int idx)
-{
-	tmr_t * p = (tmr_t *) query_timer_tree_by_index (idx);
-
-	if (!p)
-		return 0;
-
-	return 1;
-}
-
 
 int del_timer (int *idx)
 {

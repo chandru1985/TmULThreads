@@ -43,6 +43,7 @@ typedef struct tm_timer
 	unsigned int    rt;
 	unsigned int    ctime;
 	unsigned int    rmt;
+	unsigned int    exp;
 	int             wheel;
 	int 	        idx;
 	int	        flags;
