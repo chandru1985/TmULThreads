@@ -138,3 +138,53 @@ tmr_t * timer_tree_walk (struct rb_root  *root, unsigned int key, char flag)
         }
         return NULL;
 }
+
+unsigned int timer_get_remaining_time (int idx)
+{
+        unsigned int rmt = 0;
+        unsigned int t = 0;
+	unsigned int local = 0;
+
+        tmr_t * ptmr = (tmr_t *) query_timer_tree_by_index (idx);
+
+        if (!ptmr)
+                return 0;
+
+        if (GET_HRS (ptmr->ctime, t)) {
+
+		local = t;
+
+		if (ptmr->wheel == HRS_TIMERS) {
+			local = (ptmr->rt  - clk[ptmr->wheel]) ;
+		}
+		rmt += local * (60 * 60 * tm_get_ticks_per_second ());
+	}
+        if (GET_MINS (ptmr->ctime, t)) {
+		local = t;
+
+		if (ptmr->wheel == MIN_TIMERS) {
+			local = (ptmr->rt  - clk[ptmr->wheel]) ;
+		}
+	
+		rmt += local * (60 * tm_get_ticks_per_second ());
+	}
+        if (GET_SECS (ptmr->ctime, t)) {
+		local = t;
+
+		if (ptmr->wheel == SECS_TIMERS) {
+			local = (ptmr->rt  - clk[ptmr->wheel]) ;
+		}
+	
+		rmt += local * tm_get_ticks_per_second ();
+	}
+        if (GET_TICK (ptmr->ctime, t)) {
+		local = t;
+		if (ptmr->wheel == HRS_TIMERS) {
+			local = (ptmr->rt  - clk[ptmr->wheel]) ;
+		}
+	
+		rmt += local;
+	}
+
+        return rmt;
+}

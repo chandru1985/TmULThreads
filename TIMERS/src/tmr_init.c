@@ -205,6 +205,17 @@ int stop_timer (int idx)
 	return 0;
 }
 
+int timer_pending (int idx)
+{
+	tmr_t * p = (tmr_t *) query_timer_tree_by_index (idx);
+
+	if (!p)
+		return 0;
+
+	return 1;
+}
+
+
 int del_timer (int *idx)
 {
 	stop_timer (*idx);
