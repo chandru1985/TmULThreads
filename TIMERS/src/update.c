@@ -77,7 +77,7 @@ tmr_t * query_timer_tree_by_index (int idx)
 void timer_add (tmr_t *n, struct rb_root *root, int flag)
 {
         unsigned int cmp = 0, dest = 0;
-        struct rb_node **link = &root->rb_node;
+        struct rb_node **link = NULL;
         struct rb_node *parent = NULL;
         tmr_t  *x = NULL;
 
@@ -85,6 +85,10 @@ void timer_add (tmr_t *n, struct rb_root *root, int flag)
 		cmp = n->rt;
 	if (flag & QUERY_TIMER_INDEX)
 		cmp = n->idx;
+
+	sync_lock (&root->lock);
+
+        link = &root->rb_node;
 
         while (*link) {
 
@@ -105,19 +109,27 @@ void timer_add (tmr_t *n, struct rb_root *root, int flag)
 
         rb_link_node(&n->rlist, parent, link);
         rb_insert_color(&n->rlist, root);
+
+	sync_unlock (&root->lock);
 }
 
 void timer_del (tmr_t *n, struct rb_root *root)
 {
+	sync_lock (&root->lock);
         rb_erase (&n->rlist, root);
+	sync_unlock (&root->lock);
 }
 
 tmr_t * timer_tree_walk (struct rb_root  *root, unsigned int key, char flag)
 {
-        struct rb_node **p = &root->rb_node;
+        struct rb_node **p = NULL;
         struct rb_node *parent = NULL;
         tmr_t * timer = NULL;
 	unsigned int cmp = 0;
+
+	sync_lock (&root->lock);
+
+        p = &root->rb_node;
 
         while (*p) {
 
@@ -133,9 +145,11 @@ tmr_t * timer_tree_walk (struct rb_root  *root, unsigned int key, char flag)
                         p = &(*p)->rb_left;
                 else if (key > cmp) 
                         p = &(*p)->rb_right;
-                else 
+                else {
                         return timer;
+		}
         }
+	sync_unlock (&root->lock);
         return NULL;
 }
 

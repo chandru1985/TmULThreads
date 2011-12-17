@@ -1,6 +1,8 @@
 #ifndef _LINUX_LIST_H
 #define _LINUX_LIST_H
 
+#define prefetch
+
 #ifndef offset_of
 #define offset_of(type, memb) \
         ((unsigned long)(&((type *)0)->memb))

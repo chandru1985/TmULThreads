@@ -21,13 +21,13 @@ core_OBJS += $(core_OBJ_DIR)/thread_lib.o
 core_OBJS += $(core_OBJ_DIR)/iostream.o
 core_OBJS += $(core_OBJ_DIR)/soft_irq.o
 core_OBJS += $(core_OBJ_DIR)/interrupt.o
-core_OBJS += $(core_OBJ_DIR)/lock.o
 core_OBJS += $(core_OBJ_DIR)/switch_to_os.o
 endif
 core_OBJS += $(core_OBJ_DIR)/rbtree.o
 core_OBJS += $(core_OBJ_DIR)/hashlib.o
 core_OBJS += $(core_OBJ_DIR)/tmlibinit.o
 core_OBJS += $(core_OBJ_DIR)/msg_queue.o
+core_OBJS += $(core_OBJ_DIR)/lock.o
 ifneq ($(SCHED), SFS)
 core_OBJS += $(core_OBJ_DIR)/common.o
 endif

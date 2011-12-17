@@ -20,6 +20,7 @@
   linux/lib/rbtree.c
 */
 
+#include <stdio.h>
 #include "rbtree.h"
 
 static void __rb_rotate_left(struct rb_node *node, struct rb_root *root)
@@ -353,13 +354,17 @@ void rb_augment_erase_end(struct rb_node *node, rb_augment_f func, void *data)
  */
 struct rb_node *rb_first(const struct rb_root *root)
 {
-	struct rb_node	*n;
+	struct rb_node	*n = NULL;
+
+	sync_lock (&root->lock);
 
 	n = root->rb_node;
 	if (!n)
-		return NULL;
+		goto ulockret;
 	while (n->rb_left)
 		n = n->rb_left;
+ulockret:
+	sync_unlock (&root->lock);
 	return n;
 }
 

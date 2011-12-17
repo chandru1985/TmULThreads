@@ -11,25 +11,25 @@
  *
  */
 
+#ifndef TASK_H
+#define TASK_H
 #include <stdio.h>
 #include <pthread.h>
 #include <semaphore.h>
-
+#include "list.h"
+#include "sched_sfs.h"
 
 #define MIN_THREAD_STACK_SIZE   20000  /*should be atleast PTHREAD_STACK_MIN (bits/local_lim.h)*/
 
 
 #ifndef SFS_WANTED
-typedef sem_t               tmsemid_t;
+typedef sem_t               sync_lock_t;
 typedef pthread_t           tmtaskid_t;
 typedef time_t              tmclktk_t;
 typedef pthread_mutex_t     tskmtx_t;
 typedef pthread_cond_t      tskcnd_t;
 typedef pthread_attr_t      tskattr_t;
 #else
-#if 0
-typedef struct semaphore   tmsemid_t;
-#endif
 typedef unsigned long      tmtaskid_t;
 typedef unsigned long      tmclktk_t;
 struct attr1 {
@@ -61,3 +61,4 @@ void softirq_wakeup (void);
 int start_timer (unsigned int ticks, void *data, void (*handler) (void *), int flags);
 inline unsigned int tm_get_ticks_per_second (void); 
 inline unsigned int tm_convert_msec_to_tick (unsigned int msecs);
+#endif

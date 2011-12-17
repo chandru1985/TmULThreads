@@ -102,7 +102,7 @@ void * hash_tbl_lookup (char *key, HASH_TABLE *htbl)
 	return pbkt->data;
 }
 
-static int hash_delete_entry (char *string, HASH_TABLE *htbl, void (*free_data)(void *))
+static int hash_delete_entry (uint8_t *string, HASH_TABLE *htbl, void (*free_data)(void *))
 {
 	int the_bucket = -1;
 
@@ -140,7 +140,7 @@ static int hash_delete_entry (char *string, HASH_TABLE *htbl, void (*free_data)(
 	return -1;
 }
 
-static int hash_add_entry (char *string, HASH_TABLE *htbl, void *data)
+static int hash_add_entry (uint8_t *string, HASH_TABLE *htbl, void *data)
 {
 	hash_bucket_t *hentry = NULL;
 	int bucket = -1;
@@ -169,9 +169,10 @@ static int hash_add_entry (char *string, HASH_TABLE *htbl, void *data)
 			hentry = hentry->next;
 		}
 		else {
-			htbl->bucket_array[bucket] =
-				(hash_bucket_t *) malloc (sizeof (hash_bucket_t));
+			htbl->bucket_array[bucket] = alloc_block (htbl->hmem_pool_id);
 			hentry = htbl->bucket_array[bucket];
+			if (!hentry)
+				return -1;
 		}
 
 		hentry->data = data;
@@ -189,7 +190,7 @@ static int hash_add_entry (char *string, HASH_TABLE *htbl, void *data)
 	return 0;
 }
 
-int  hash_tbl_add (char *key, HASH_TABLE *htbl, void *data)
+int  hash_tbl_add (uint8_t *key, HASH_TABLE *htbl, void *data)
 {
 	if (hash_add_entry (key , htbl, data) < 0) {
 		return -1;
@@ -237,31 +238,23 @@ void destroy_hash_table (HASH_TABLE *htbl, void (*free_data) (void *))
 	mem_pool_delete (htbl->hmem_pool_id);
 }
 
-void print_table_stats (HASH_TABLE *htbl, char *name)
+int hash_walk (HASH_TABLE *htbl, void (*callback)(void *))
 {
 	register int slot, bcount;
 	register hash_bucket_t *bc;
-
-	if (name == 0)
-		name = "unknown hash table";
-
-	fprintf (stderr, "%s: %d buckets; %d items\n", name, htbl->nbuckets, htbl->nentries);
+	int count = 0;
 
 	/* Print out a count of how many strings hashed to each bucket, so we can
 	   see how even the distribution is. */
 	for (slot = 0; slot < htbl->nbuckets; slot++)
 	{
 		bc = get_hash_bucket (slot, htbl);
-
-		fprintf (stderr, "slot %3d: ", slot);
-		for (bcount = 0; bc; bc = bc->next) {
-			fprintf (stderr, "\n%x:%x:%x:%x:%x:%x", (int)bc->key[0],
-				(int)bc->key[1],(int)bc->key[2],(int)bc->key[3],
-                                (int)bc->key[4],(int)bc->key[5]);
-			bcount++;
+		if (bc) {
+			for (bcount = 0; bc; bc = bc->next) {
+				count++;
+  				callback (bc->data);
+			}
 		}
-		if (bcount)
-			fprintf (stderr, "%d", bcount);
-		fprintf (stderr, "\n");
 	}
+	return count;
 }

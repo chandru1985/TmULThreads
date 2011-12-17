@@ -138,7 +138,7 @@ int setup_timer (int *pindex, void (*handler) (void *), void *data)
 	return 0;
 }
 
-int mod_timer (int *pindex, unsigned int ticks)
+int mod_timer (int *pindex, unsigned int secs)
 {
 	tmr_t * p = (tmr_t *) timer_tree_walk (&wait_timers.root , *pindex, 
                                                 QUERY_TIMER_INDEX);
@@ -153,7 +153,7 @@ int mod_timer (int *pindex, unsigned int ticks)
 
 	INIT_LIST_HEAD (&new->elist);
 	new->idx = p->idx;
-	new->rmt = ticks * tm_get_ticks_per_second ();
+	new->rmt = secs * tm_get_ticks_per_second ();
 	new->data = p->data;
 	new->time_out_handler = p->time_out_handler;
 
@@ -298,6 +298,11 @@ unsigned int get_timers_count (void)
 	return TIMER_COUNT();
 }
 
+void show_uptime (void)
+{
+	printf ("Uptime  %d hrs %d mins %d secs %d ticks\n",get_hrs(), 
+		 get_mins() % 60, get_secs() % 60, get_ticks() % tm_get_ticks_per_second ());
+}
 void tm_test_timers_latency ()
 {
 	dump_task_info ();

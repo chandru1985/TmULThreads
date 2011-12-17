@@ -19,6 +19,7 @@
 #include "list.h"
 #include "sched_sfs.h"
 
+#ifdef SFS_WANTED
 int create_sync_lock (sync_lock_t *slock, int type, int count)
 {
 	slock->lock = 0;
@@ -116,3 +117,36 @@ int unlock (lock_t *lock)
 
 	return 0;
 }
+#else
+int create_sync_lock (sync_lock_t *slock)
+{
+	if (!slock)
+		return -1;
+	if (sem_init(slock, 0, 0) < 0) {
+		perror ("SEM_INIT: ");
+		return -1;
+	}
+        sync_unlock (slock);
+	return 0;
+}
+
+int sync_lock (sync_lock_t *slock)
+{
+	while (sem_wait (slock) < 0)  {
+		/*signal interrupts*/
+		if (errno == EINTR) {
+			continue;
+		}
+	}
+
+	return 0;
+}
+int sync_unlock (sync_lock_t *slock)
+{
+	if (sem_post (slock) < 0) {
+		perror ("SEM_POST: ");
+		return -1;
+	}
+	return 0;
+}
+#endif

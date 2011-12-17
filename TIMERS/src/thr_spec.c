@@ -98,6 +98,8 @@ static inline void timer_rq_init (void)
 
 int init_timer_mgr (void)
 {
+	int i = TIMER_WHEEL;
+
 	timer_rq_init ();
 
 #ifdef SFS_WANTED
@@ -114,6 +116,11 @@ int init_timer_mgr (void)
 		return FAILURE;
 	}
 #endif
+	while (--i >= 0) {
+		create_sync_lock (&tmrrq.root[i].lock);
+	}
+	create_sync_lock (&wait_timers.root.lock);
+
 	return SUCCESS;
 }
 
