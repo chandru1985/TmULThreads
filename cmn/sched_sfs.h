@@ -47,7 +47,8 @@ enum tsk_state {
 	TASK_RUNNABLE,
 	TASK_STOPPED,
 	TASK_INTERRUPTIBLE,
-	TASK_UNINTERRUPTIBLE        
+	TASK_UNINTERRUPTIBLE,
+	TASK_DEBUG 
 };
 
 struct signal_s {
@@ -110,12 +111,13 @@ struct tsk {
 	int              ntimers;
 	int              event;
 	int              wait_evts;
+	int 		 size;
+	char **		 stk_trc_sym;
 	clock_t          stick; /*remove the following two*/
 	clock_t          etick;
 	jmp_buf 	 regs;           /*Current Execution Registers*/
 };
 
-extern struct tsk *current;
 extern unsigned long tswc;
 extern unsigned long jiffies;
 extern int sched_need;
@@ -139,7 +141,6 @@ inline unsigned int tm_convert_msec_to_tick (unsigned int msecs);
 int nsetjmp(jmp_buf env);
 int nlongjmp(jmp_buf env, int val);
 struct tsk * find_task (int tid);
-void task_find_right_RQ (struct tsk *ntsk);
 struct tsk * io_wait_task_lookup (int tid);
 struct list_head * io_get_next_non_empty_task_list (int *fd);
 void add_task_to_IO_wait_Q (struct list_head *hd, int fd);
@@ -186,8 +187,10 @@ void tm_free (void *p , size_t size);
 void generic_sig_handler (int sig, siginfo_t *p, void *n);
 void os_register_signal_handler (int signo, void (*handle) (int sig, siginfo_t *p, void *n));
 void wake_irq (unsigned long irqid);
-int sig_pending (void);
-void process_signal (void);
+void process_signal (struct tsk *);
 void invoke_signal_hanlder (int signo);
 void set_current_task_time_slice (unsigned int tslice);
+struct tsk *get_current ();
+#else
+#include "task.h"
 #endif

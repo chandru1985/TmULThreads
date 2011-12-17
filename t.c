@@ -3,7 +3,7 @@
 #include <sys/resource.h>
 #include <signal.h>
 #include "cmn/list.h"
-#include "core/sched_sfs.h"
+#include "cmn/sched_sfs.h"
 
 void seg_fault (int );
 void timer_expd (void * k);
@@ -43,6 +43,7 @@ void *start_rout3 (void *unused)
 Just_log ()
 {
 	dump_task_info ();
+	exit (0);
 }
 
 

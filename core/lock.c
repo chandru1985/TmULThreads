@@ -30,6 +30,7 @@ int create_sync_lock (sync_lock_t *slock, int type, int count)
 
 int sync_lock (sync_lock_t *slock)
 {
+	return 0;
 	while (slock->lock) {
 		list_del (&(get_current())->hd);
 		list_add_tail (&(get_current())->hd, &slock->wq);
@@ -49,6 +50,7 @@ int sync_lock (sync_lock_t *slock)
 }
 int sync_unlock (sync_lock_t *slock)
 {
+	return 0;
 	if (!slock->lock) {
 		return -1;
 	}
@@ -132,6 +134,7 @@ int create_sync_lock (sync_lock_t *slock)
 
 int sync_lock (sync_lock_t *slock)
 {
+	return 0;
 	while (sem_wait (slock) < 0)  {
 		/*signal interrupts*/
 		if (errno == EINTR) {
@@ -143,6 +146,7 @@ int sync_lock (sync_lock_t *slock)
 }
 int sync_unlock (sync_lock_t *slock)
 {
+	return 0;
 	if (sem_post (slock) < 0) {
 		perror ("SEM_POST: ");
 		return -1;
