@@ -124,17 +124,15 @@ int create_sync_lock (sync_lock_t *slock)
 {
 	if (!slock)
 		return -1;
-	if (sem_init(slock, 0, 0) < 0) {
+	if (sem_init(slock, 0, 1) < 0) {
 		perror ("SEM_INIT: ");
 		return -1;
 	}
-        sync_unlock (slock);
 	return 0;
 }
 
 int sync_lock (sync_lock_t *slock)
 {
-	return 0;
 	while (sem_wait (slock) < 0)  {
 		/*signal interrupts*/
 		if (errno == EINTR) {
@@ -146,7 +144,6 @@ int sync_lock (sync_lock_t *slock)
 }
 int sync_unlock (sync_lock_t *slock)
 {
-	return 0;
 	if (sem_post (slock) < 0) {
 		perror ("SEM_POST: ");
 		return -1;

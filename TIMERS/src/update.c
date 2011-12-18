@@ -146,6 +146,7 @@ tmr_t * timer_tree_walk (struct rb_root  *root, unsigned int key, char flag)
                 else if (key > cmp) 
                         p = &(*p)->rb_right;
                 else {
+			sync_unlock (&root->lock);
                         return timer;
 		}
         }
@@ -153,9 +154,9 @@ tmr_t * timer_tree_walk (struct rb_root  *root, unsigned int key, char flag)
         return NULL;
 }
 
-int timer_pending (int *idx)
+int timer_pending (int idx)
 {
-        tmr_t * p = query_timer_tree_by_index (*idx);
+        tmr_t * p = query_timer_tree_by_index (idx);
 
         if (!p)
                 return 0;
@@ -186,4 +187,3 @@ unsigned int timer_get_remaining_time (int idx)
 
         return t;
 }
-
