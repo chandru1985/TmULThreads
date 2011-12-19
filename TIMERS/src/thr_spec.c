@@ -105,7 +105,7 @@ int init_timer_mgr (void)
 #ifdef SFS_WANTED
 	irq = softirq_create (btm_hlf, 0);
 #else
-	if (task_create ("TMRBHF", 90, TSK_SCHED_RR, 32000,
+	if (task_create ("TMRBHF", 99, TSK_SCHED_RR, 32000,
 	  		  tick_service, NULL, NULL, &btmhlftask_id) == TSK_FAILURE) {
 		return FAILURE;
 	}

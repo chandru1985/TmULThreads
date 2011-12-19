@@ -122,36 +122,36 @@ void timer_del (tmr_t *n, struct rb_root *root)
 
 tmr_t * timer_tree_walk (struct rb_root  *root, unsigned int key, char flag)
 {
-        struct rb_node **p = NULL;
-        struct rb_node *parent = NULL;
-        tmr_t * timer = NULL;
+	struct rb_node **p = NULL;
+	struct rb_node *parent = NULL;
+	tmr_t * timer = NULL;
 	unsigned int cmp = 0;
 
 	sync_lock (&root->lock);
 
-        p = &root->rb_node;
+	p = &root->rb_node;
 
-        while (*p) {
+	while (*p) {
 
-                parent = *p;
+		parent = *p;
 
-                timer = rb_entry (parent, tmr_t, rlist);
+		timer = rb_entry (parent, tmr_t, rlist);
 
-		if (flag & QUERY_TIMER_EXPIRY)
-	                cmp = timer->rt;
+		if (flag & QUERY_TIMER_EXPIRY) 
+			cmp = timer->rt;
 		if (flag & QUERY_TIMER_INDEX)
-	                cmp = timer->idx;
-                if (key < cmp)
-                        p = &(*p)->rb_left;
-                else if (key > cmp) 
-                        p = &(*p)->rb_right;
-                else {
+			cmp = timer->idx;
+		if (key < cmp)
+			p = &(*p)->rb_left;
+		else if (key > cmp) 
+			p = &(*p)->rb_right;
+		else {
 			sync_unlock (&root->lock);
-                        return timer;
+			return timer;
 		}
-        }
+	}
 	sync_unlock (&root->lock);
-        return NULL;
+	return NULL;
 }
 
 int timer_pending (int idx)

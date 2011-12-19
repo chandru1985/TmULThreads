@@ -58,8 +58,10 @@ int main (int argc , char **argv)
 	tmlib_init ();
 	char task[4] = "TS";
 
+	sleep (1);
+
 	int id = start_timer (10 * tm_get_ticks_per_second (), NULL, (void (*) (void *))&Just_log, 0);
-	int id1 = start_timer ((61) * tm_get_ticks_per_second (), NULL, (void (*) (void *))&Just_log, 0);
+	int id1 = start_timer ((11) * tm_get_ticks_per_second (), NULL, (void (*) (void *))&Just_log, 0);
 
 	while (1) {
 		printf ("Remaining time id (10 secs): %u  id1 (1 min) : %u \n",timer_get_remaining_time(id) / tm_get_ticks_per_second () ,timer_get_remaining_time(id1) / tm_get_ticks_per_second ());
