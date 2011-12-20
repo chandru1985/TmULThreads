@@ -210,6 +210,8 @@ int stop_timer (TIMER_T *p)
 {
 	timer_del (p->apptimer, &tmrrq.root[p->wheel]);
 
+	p->is_running = 0;
+
 	free (p->apptimer);
 
 	DEC_TIMER_COUNT ();
