@@ -40,12 +40,15 @@ void process_expd_timers (void)
 
 		list_del (&ptmr->elist);
 
+		ptmr->timer->apptimer = NULL;
+
 		if (ptmr->timer->flags & TIMER_ONCE) {
 			free_timer (ptmr->timer);
 		} 
 		else if (ptmr->timer->flags & TIMER_REPEAT) {
 			timer_restart (ptmr->timer);
 		}
+
 		free (ptmr);
 	}
 }

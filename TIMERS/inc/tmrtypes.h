@@ -46,6 +46,7 @@ typedef struct tm_timer
 	int	        flags;
 	int 		is_running;
 	void           *data;
+	void           *apptimer;
  	void           (*time_out_handler)(void *);
 }TIMER_T;
 

@@ -105,6 +105,9 @@ TIMER_T * start_timer (unsigned int ticks, void *data, void (*handler) (void *),
 	}
 
 	apptimer->timer = new;
+
+	new->apptimer = apptimer;
+
 	INIT_LIST_HEAD (&apptimer->elist);
 
 	calc_time (apptimer);
@@ -159,6 +162,8 @@ int mod_timer (TIMER_T *p, unsigned int secs)
 
 	apptimer->timer = p;
 
+	p->apptimer = apptimer;
+
 	calc_time (apptimer);
 
 	find_tmr_slot_and_place (apptimer);
@@ -203,9 +208,9 @@ static int alloc_timer_id (void)
 
 int stop_timer (TIMER_T *p)
 {
-	timer_del (p, &tmrrq.root[p->wheel]);
+	timer_del (p->apptimer, &tmrrq.root[p->wheel]);
 
-	free_timer (p);
+	free (p->apptimer);
 
 	DEC_TIMER_COUNT ();
 
@@ -214,7 +219,8 @@ int stop_timer (TIMER_T *p)
 
 int del_timer (TIMER_T *p)
 {
-	stop_timer (p);
+	if (p->apptimer && p->is_running)
+		stop_timer (p);
 }
 
 static inline TIMER_T * alloc_timer (void)
