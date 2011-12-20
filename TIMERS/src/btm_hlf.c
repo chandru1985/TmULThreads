@@ -14,9 +14,9 @@ struct list_head expd_tmrs;
 
 void btm_hlf (void)
 {
-
-        tm_process_tick_and_update_timers ();
-
+#ifdef SFS_WANTED
+	tm_process_tick_and_update_timers ();
+#endif
 	if (!list_empty (&expd_tmrs)) {
 		process_expd_timers ();
 	}
@@ -24,27 +24,28 @@ void btm_hlf (void)
 
 void process_expd_timers (void)
 {
-	tmr_t 		  *ptmr = NULL;
+	APP_TIMER_T		  *ptmr = NULL;
 	struct list_head  *pnode = NULL;
 	struct list_head  *next = NULL;
 	struct list_head  *head = &expd_tmrs;
 
 	list_for_each_safe (pnode, next, head) {
 
-		ptmr = list_entry (pnode, tmr_t, elist);
+		ptmr = list_entry (pnode, APP_TIMER_T, elist);
 
 
-		if (ptmr->time_out_handler) {
-			ptmr->time_out_handler (ptmr->data);
+		if (ptmr->timer->time_out_handler) {
+			ptmr->timer->time_out_handler (ptmr->timer->data);
 		}
 
 		list_del (&ptmr->elist);
 
-		if (ptmr->flags & TIMER_ONCE || ptmr->flags & TIMER_FOREVER) {
-			free_timer (ptmr);
+		if (ptmr->timer->flags & TIMER_ONCE) {
+			free_timer (ptmr->timer);
 		} 
-		else if (ptmr->flags & TIMER_REPEAT) {
-			timer_restart (ptmr);
+		else if (ptmr->timer->flags & TIMER_REPEAT) {
+			timer_restart (ptmr->timer);
 		}
+		free (ptmr);
 	}
 }

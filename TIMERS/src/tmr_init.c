@@ -13,8 +13,8 @@
 #define MAX_TIMERS 2000
 
 static inline void timer_rq_init (void);
-static void calc_time (tmr_t * ptmr);
-static tmr_t * alloc_timer (void);
+static void calc_time (APP_TIMER_T * ptmr);
+static TIMER_T * alloc_timer (void);
 static int alloc_timer_id (void);
 
 
@@ -24,7 +24,6 @@ static int indx = 0;
 
 /************* Global Variable Declaration *********************/
 struct active_timers  tmrrq;
-struct wait_tmr    wait_timers; 
 unsigned  int clk[TIMER_WHEEL];
 /****************************************************************/
 
@@ -33,12 +32,12 @@ int shut_timer_mgr (void)
 	return SUCCESS;
 }
 
-static inline void update_wheel (tmr_t *p, int wheel)
+static inline void update_wheel (TIMER_T *p, int wheel)
 {
 	p->wheel = wheel;
 }
 
-int find_tmr_slot_and_place (tmr_t * ptmr)
+int find_tmr_slot_and_place (APP_TIMER_T * ptmr)
 {
 	unsigned int ct = ptmr->ctime;
 	unsigned int t = 0;
@@ -55,15 +54,16 @@ int find_tmr_slot_and_place (tmr_t * ptmr)
 	
 	if (wheel >= 0) {
 		ptmr->rt = (clk[wheel] + t);
-		update_wheel (ptmr, wheel);
+		update_wheel (ptmr->timer, wheel);
+		ptmr->timer->is_running = 1;
 		timer_add (ptmr, &tmrrq.root[wheel], QUERY_TIMER_EXPIRY);
 	}
 	return 0;
 }
 
-static void calc_time (tmr_t * ptmr)
+static void calc_time (APP_TIMER_T * ptmr)
 {
-	unsigned int tick = ptmr->rmt;
+	unsigned int tick = ptmr->timer->rmt;
 	unsigned int secs = tick / tm_get_ticks_per_second ();
 	unsigned int mins = secs / 60;
 	unsigned int hrs =  mins / 60;
@@ -73,12 +73,13 @@ static void calc_time (tmr_t * ptmr)
 	SET_MINS (ptmr->ctime,  mins);
 	SET_HRS  (ptmr->ctime,  hrs);
 
-	ptmr->exp = tick + clk[TICK];
+	ptmr->timer->exp = tick + clk[TICK];
 }
 
-int start_timer (unsigned int ticks, void *data, void (*handler) (void *), int flags)
+TIMER_T * start_timer (unsigned int ticks, void *data, void (*handler) (void *), int flags)
 {
-	tmr_t  *new = NULL;
+	TIMER_T  *new = NULL;
+	APP_TIMER_T *apptimer = NULL;
 	int idx = 0;
 
 	if ( !(idx = alloc_timer_id ())  || 
@@ -86,11 +87,8 @@ int start_timer (unsigned int ticks, void *data, void (*handler) (void *), int f
 		return -1;
 	}
 
-	INIT_LIST_HEAD (&new->elist);
 	new->idx = idx;
 	new->rmt = ticks;
-	new->ctime = 0;
-	new->rt = 0;
 	new->data = data;
 	new->time_out_handler = handler;
 
@@ -99,18 +97,28 @@ int start_timer (unsigned int ticks, void *data, void (*handler) (void *), int f
 	else
 		new->flags = TIMER_ONCE;
 
-	calc_time (new);
+	apptimer = tm_calloc (1, sizeof(APP_TIMER_T));
 
-	find_tmr_slot_and_place (new);
+	if (!apptimer) {
+		free_timer (new);
+		return -1;
+	}
+
+	apptimer->timer = new;
+	INIT_LIST_HEAD (&apptimer->elist);
+
+	calc_time (apptimer);
+
+	find_tmr_slot_and_place (apptimer);
 
 	INC_TIMER_COUNT ();
 
-	return idx;
+	return new;
 }
 
-int setup_timer (int *pindex, void (*handler) (void *), void *data)
+int setup_timer (TIMER_T **p, void (*handler) (void *), void *data)
 {
-	tmr_t  *new = NULL;
+	TIMER_T  *new = NULL;
 	int idx = 0;
 
 	if ( !(idx = alloc_timer_id ())  || 
@@ -118,64 +126,66 @@ int setup_timer (int *pindex, void (*handler) (void *), void *data)
 		return -1;
 	}
 
-	INIT_LIST_HEAD (&new->elist);
 	new->idx = idx;
 	new->rmt = 0;
-	new->ctime = 0;
-	new->rt = 0;
 	new->data = data;
 	new->time_out_handler = handler;
 
 	new->flags = TIMER_FOREVER;
 
-	*pindex = idx;
-
 	update_wheel (new, WAIT_TIMERS);
 
-	/*need to find the impact*/
-	timer_add (new, &wait_timers.root, QUERY_TIMER_INDEX);
+	*p = new;
 
 	return 0;
 }
 
-int mod_timer (int *pindex, unsigned int secs)
+int mod_timer (TIMER_T *p, unsigned int secs)
 {
-	tmr_t * p = (tmr_t *) timer_tree_walk (&wait_timers.root , *pindex, 
-                                                QUERY_TIMER_INDEX);
+	APP_TIMER_T *apptimer = NULL;
+
 	if (!p)
 		return -1;
 
-	tmr_t * new = alloc_timer ();
+	apptimer = tm_calloc (1, sizeof(APP_TIMER_T));
 
-	if (!new) {
+	if (!apptimer) {
 		return -1;
 	}
 
-	INIT_LIST_HEAD (&new->elist);
-	new->idx = p->idx;
-	new->rmt = secs * tm_get_ticks_per_second ();
-	new->data = p->data;
-	new->time_out_handler = p->time_out_handler;
+	INIT_LIST_HEAD (&apptimer->elist);
 
-	calc_time (new);
+	p->rmt = secs * tm_get_ticks_per_second ();
 
-	find_tmr_slot_and_place (new);
+	apptimer->timer = p;
+
+	calc_time (apptimer);
+
+	find_tmr_slot_and_place (apptimer);
 
 	INC_TIMER_COUNT ();
 
 	return 0;
 }
 
-int timer_restart  (tmr_t *p)
+int timer_restart  (TIMER_T *p)
 {
+	APP_TIMER_T *apptimer = NULL;
+
 	if (!p)
 		return -1;
 
-	INIT_LIST_HEAD (&p->elist);
+	apptimer = tm_calloc (1, sizeof(APP_TIMER_T));
 
-	calc_time (p);
+	if (!apptimer) {
+		return -1;
+	}
 
-	find_tmr_slot_and_place (p);
+	INIT_LIST_HEAD (&apptimer->elist);
+
+	calc_time (apptimer);
+
+	find_tmr_slot_and_place (apptimer);
 
 	INC_TIMER_COUNT ();
 
@@ -191,13 +201,8 @@ static int alloc_timer_id (void)
 	return ++indx;
 }
 
-int stop_timer (int idx)
+int stop_timer (TIMER_T *p)
 {
-	tmr_t * p = (tmr_t *) query_timer_tree_by_index (idx);
-
-	if (!p)
-		return -1;
-
 	timer_del (p, &tmrrq.root[p->wheel]);
 
 	free_timer (p);
@@ -207,34 +212,17 @@ int stop_timer (int idx)
 	return 0;
 }
 
-int del_timer (int *idx)
+int del_timer (TIMER_T *p)
 {
-	stop_timer (*idx);
+	stop_timer (p);
 }
 
-int restart_timer (int idx)
+static inline TIMER_T * alloc_timer (void)
 {
-	tmr_t * p = (tmr_t *) query_timer_tree_by_index (idx);
-
-	if (!p)
-		return -1;
-
-	timer_del (p, &tmrrq.root[p->wheel]);
-
-        calc_time (p);
-
-        find_tmr_slot_and_place (p);
-
-	return 0;
+	return tm_calloc (1, sizeof(TIMER_T));
 }
 
-static inline tmr_t * alloc_timer (void)
-{
-	return tm_calloc (1, sizeof(tmr_t));
-}
-
-
-void free_timer (tmr_t *p) 
+void free_timer (TIMER_T *p) 
 {
 	tm_free (p, sizeof(*p));
 }
@@ -245,16 +233,16 @@ static inline int timers_pending_for_service (void)
 		if (rb_first (&tmrrq.root[TICK_TIMERS])) {
 			goto service_req;
 		}
-		if (rb_first (&tmrrq.root[SECS_TIMERS])) {
-			if (IS_NXT_SEC_HAPPEND)
+		if (IS_NXT_SEC_HAPPEND) {
+			if (rb_first (&tmrrq.root[SECS_TIMERS]))
 				goto service_req;
 		}
-		if (rb_first (&tmrrq.root[MIN_TIMERS])) {
-			if (IS_NXT_MIN_HAPPEND)
+		if (IS_NXT_MIN_HAPPEND) {
+			if (rb_first (&tmrrq.root[MIN_TIMERS])) 
 				goto service_req;
 		}
-		if (rb_first (&tmrrq.root[HRS_TIMERS])) {
-			if (IS_NXT_HR_HAPPEND)
+		if (IS_NXT_HR_HAPPEND) {
+			if (rb_first (&tmrrq.root[HRS_TIMERS])) 
 				goto service_req;
 		}
 	}

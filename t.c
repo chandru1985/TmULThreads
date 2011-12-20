@@ -43,7 +43,16 @@ void *start_rout3 (void *unused)
 Just_log ()
 {
 	dump_task_info ();
-	exit (0);
+}
+
+void *id2 = NULL;
+exp ()
+{
+	static int i = 0;
+	printf ("Timer Expd : %d\n", i++);
+	fflush (stdout);
+	mod_timer (id2, 2);
+
 }
 
 
@@ -58,16 +67,27 @@ int main (int argc , char **argv)
 	tmlib_init ();
 	char task[4] = "TS";
 
-	sleep (1);
 
-	int id = start_timer (10 * tm_get_ticks_per_second (), NULL, (void (*) (void *))&Just_log, 0);
-	int id1 = start_timer ((11) * tm_get_ticks_per_second (), NULL, (void (*) (void *))&Just_log, 0);
+	void* id = start_timer (10 * tm_get_ticks_per_second (), NULL, (void (*) (void *))&Just_log, 0);
+	void* id1 = start_timer ((11) * tm_get_ticks_per_second (), NULL, (void (*) (void *))&Just_log, 0);
+	
+	setup_timer (&id2, exp, NULL);
 
+	mod_timer (id2, 2);
+#if 1
 	while (1) {
-		printf ("Remaining time id (10 secs): %u  id1 (1 min) : %u \n",timer_get_remaining_time(id) / tm_get_ticks_per_second () ,timer_get_remaining_time(id1) / tm_get_ticks_per_second ());
-		sleep (3);
+	printf ("Remaining time id (10 secs): %u  id1 (1 min) : %u \n",timer_get_remaining_time(id) / tm_get_ticks_per_second () ,timer_get_remaining_time(id1) / tm_get_ticks_per_second ());
+	sleep (3);
 	}
+#endif
 
+
+	timer_restart (id1);
+	while (1) {
+		sleep (1);
+		printf ("Remaining time id (10 secs): %u  id1 (1 min) : %u \n",timer_get_remaining_time(id) / tm_get_ticks_per_second () ,timer_get_remaining_time(id1) / tm_get_ticks_per_second ());
+
+	}
 
 	for ( i = 0; i <=25; i++) {
 		task[2] = (char)(97+i);
@@ -76,16 +96,5 @@ int main (int argc , char **argv)
 				(void *)(i+1), &rettskid[i]);
 	}
 
-	printf ("OS threading ....\n");
-	switch_to_os_threading ();
-
-	sleep (60);
-	printf ("NO OS threading ....\n");
-
-	switch_back ();
-
-	dump_task_info ();
-	dump_task_info ();
-	dump_task_info ();
 	sleep_forever ();
 }

@@ -58,7 +58,6 @@ void *tm_calloc(size_t nmemb, size_t size);
 void * tm_malloc (size_t size);
 void tm_free (void *p , size_t size);
 void softirq_wakeup (void);
-int start_timer (unsigned int ticks, void *data, void (*handler) (void *), int flags);
 inline unsigned int tm_get_ticks_per_second (void); 
 inline unsigned int tm_convert_msec_to_tick (unsigned int msecs);
 #endif

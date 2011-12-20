@@ -40,6 +40,6 @@
 
 #define TMR_SERVE_TIMERS 0x1
 
-void  free_timer (tmr_t *p); 
+void  free_timer (TIMER_T *p); 
 void  btm_hlf (void);
 

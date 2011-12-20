@@ -36,20 +36,27 @@ struct wait_tmr {
 	unsigned int count;
 };
 
+
 typedef struct tm_timer
 {
-	struct rb_node rlist; 
-	struct list_head elist; 
-	unsigned int    rt;
-	unsigned int    ctime;
 	unsigned int    rmt;
 	unsigned int    exp;
 	int             wheel;
 	int 	        idx;
 	int	        flags;
+	int 		is_running;
 	void           *data;
  	void           (*time_out_handler)(void *);
-}tmr_t;
+}TIMER_T;
+
+typedef struct app_timer {
+	struct rb_node rlist; 
+	struct list_head elist; 
+	TIMER_T	      *timer;
+	unsigned int    ctime;
+	unsigned int    rt;
+}APP_TIMER_T;
+
 
 
 #define TIMER_MGR_RUNNING       2
@@ -102,14 +109,12 @@ typedef struct tm_timer
 #define IS_NXT_HR_HAPPEND      !(clk[MIN] ? (clk[MIN] % 60) : 1)
 
 extern struct active_timers  tmrrq;
-extern struct wait_tmr wait_timers;
 extern struct list_head expd_tmrs;
 extern unsigned int clk[];
 
-void tm_process_tick_and_update_timers (void);
+int tm_process_tick_and_update_timers (void);
 void process_expd_timers (void);
 void free_timer_id ();
-int find_tmr_slot_and_place (tmr_t * ptmr);
-void timer_del (tmr_t *n, struct rb_root *root);
-tmr_t * query_timer_tree_by_index (int idx);
-void timer_add (tmr_t *n, struct rb_root *root, int);
+int find_tmr_slot_and_place (APP_TIMER_T * ptmr);
+void timer_del (APP_TIMER_T *n, struct rb_root *root);
+void timer_add (APP_TIMER_T *n, struct rb_root *root, int);

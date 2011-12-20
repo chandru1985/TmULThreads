@@ -144,7 +144,6 @@ struct tsk * find_task (int tid);
 struct tsk * io_wait_task_lookup (int tid);
 struct list_head * io_get_next_non_empty_task_list (int *fd);
 void add_task_to_IO_wait_Q (struct list_head *hd, int fd);
-int start_timer (unsigned int ticks, void *data, void (*handler) (void *), int flags);
 void *tm_calloc(size_t nmemb, size_t size);
 void * tm_malloc (size_t size);
 void tm_free (void *p , size_t size);

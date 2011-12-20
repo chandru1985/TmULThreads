@@ -32,5 +32,4 @@ VERSION=1.0
 CODE_COV = -fprofile-arcs -ftest-converage
 CFLAGS = $(DEBUG_FLAGS) \
 	-Wall \
-	-rdynamic \
-	-pg
+	-rdynamic 

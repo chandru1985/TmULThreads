@@ -119,7 +119,6 @@ int init_timer_mgr (void)
 	while (--i >= 0) {
 		create_sync_lock (&tmrrq.root[i].lock);
 	}
-	create_sync_lock (&wait_timers.root.lock);
 
 	return SUCCESS;
 }
@@ -131,6 +130,8 @@ void service_timers (void)
 	wake_irq (irq);
 	softirq_wakeup ();
 #else
-	evt_snd (btmhlftask_id, TMR_SERVE_TIMERS);
+        if (tm_process_tick_and_update_timers ()) {
+		evt_snd (btmhlftask_id, TMR_SERVE_TIMERS);
+	}
 #endif
 }

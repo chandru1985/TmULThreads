@@ -10,81 +10,69 @@
 
 #include "inc.h"
 
-tmr_t * timer_tree_walk (struct rb_root  *root, unsigned int key, char flag);
+APP_TIMER_T * timer_tree_walk (struct rb_root  *root, unsigned int key, char flag);
 
 #define IS_TMR_EXPD(ptmr)               !ptmr->ctime 
 
-static inline void timer_expiry_action (tmr_t * ptmr)
+static inline void timer_expiry_action (APP_TIMER_T * ptmr)
 {
 	if (IS_TMR_EXPD (ptmr)) {
 		DEC_TIMER_COUNT ();
+		ptmr->timer->is_running = 0;
 		list_add_tail (&ptmr->elist, &expd_tmrs);
 	}
 	else
 		find_tmr_slot_and_place (ptmr);
 }
 
-static inline void clear_wheel_timer (tmr_t *p)
+static inline void clear_wheel_timer (APP_TIMER_T *p)
 {
 	unsigned int wheel_mask [TIMER_WHEEL] = {0xFFFFFC00 , 0xFFFF03FF, 
 					         0xFFC0FFFF, 0x3FFFFF};
-	p->ctime &= wheel_mask[p->wheel];
+	p->ctime &= wheel_mask[p->timer->wheel];
 }
 
-static inline void process_timers (struct rb_root *root, unsigned int expires)
+static inline int process_timers (struct rb_root *root, unsigned int expires)
 {
-	tmr_t *ptmr = NULL;
+	APP_TIMER_T *ptmr = NULL;
+	int     expd_count = 0;
 
 	while ((ptmr = timer_tree_walk (root, expires, QUERY_TIMER_EXPIRY))) {
+		expd_count++;
 		clear_wheel_timer (ptmr);
 		timer_del (ptmr, root);
 		timer_expiry_action (ptmr);
 	}
+	return expd_count;
 }
 
-void tm_process_tick_and_update_timers (void)
+int tm_process_tick_and_update_timers (void)
 {
-	process_timers (&tmrrq.root[TICK_TIMERS], clk[TICK_TIMERS]);
+	int timers_exp = 0;
+
+	timers_exp = process_timers (&tmrrq.root[TICK_TIMERS], clk[TICK_TIMERS]);
 
 	if (IS_NXT_SEC_HAPPEND) {
-		process_timers (&tmrrq.root[SECS_TIMERS], clk[SECS_TIMERS]);
+		timers_exp += process_timers (&tmrrq.root[SECS_TIMERS], clk[SECS_TIMERS]);
 		if (IS_NXT_MIN_HAPPEND) {
-			process_timers (&tmrrq.root[MIN_TIMERS], clk[MIN_TIMERS]);
+			timers_exp += process_timers (&tmrrq.root[MIN_TIMERS], clk[MIN_TIMERS]);
 			if (IS_NXT_HR_HAPPEND) {
-				process_timers (&tmrrq.root[HRS_TIMERS], clk[HRS_TIMERS]);
+				timers_exp += process_timers (&tmrrq.root[HRS_TIMERS], clk[HRS_TIMERS]);
 			}
 		}
 	}
+
+	return timers_exp;
 }
 
-tmr_t * query_timer_tree_by_index (int idx)
-{
-	tmr_t * p = NULL;
-
-	if ((p = timer_tree_walk (&tmrrq.root[TICK_TIMERS], idx, QUERY_TIMER_INDEX)))
-		return p;
-
-	if ((p = timer_tree_walk (&tmrrq.root[SECS_TIMERS], idx, QUERY_TIMER_INDEX)))
-		return p;
-
-	if ((p = timer_tree_walk (&tmrrq.root[MIN_TIMERS], idx, QUERY_TIMER_INDEX)))
-		return p;
-
-	if ((p = timer_tree_walk (&tmrrq.root[HRS_TIMERS], idx, QUERY_TIMER_INDEX)))
-		return p;
-}
-
-void timer_add (tmr_t *n, struct rb_root *root, int flag)
+void timer_add (APP_TIMER_T *n, struct rb_root *root, int flag)
 {
         unsigned int cmp = 0, dest = 0;
         struct rb_node **link = NULL;
         struct rb_node *parent = NULL;
-        tmr_t  *x = NULL;
+        APP_TIMER_T  *x = NULL;
 
-	if (flag & QUERY_TIMER_EXPIRY)
-		cmp = n->rt;
-	if (flag & QUERY_TIMER_INDEX)
-		cmp = n->idx;
+	cmp = n->rt;
 
 	sync_lock (&root->lock);
 
@@ -94,12 +82,9 @@ void timer_add (tmr_t *n, struct rb_root *root, int flag)
 
                 parent = *link;
 
-                x = rb_entry(parent, tmr_t, rlist);
+                x = rb_entry(parent, APP_TIMER_T, rlist);
 
-		if (flag & QUERY_TIMER_EXPIRY)
-			dest = x->rt;
-		if (flag & QUERY_TIMER_INDEX)
-			dest = x->idx;
+		dest = x->rt;
 
                 if (cmp < dest)
                         link = &(*link)->rb_left;
@@ -113,18 +98,19 @@ void timer_add (tmr_t *n, struct rb_root *root, int flag)
 	sync_unlock (&root->lock);
 }
 
-void timer_del (tmr_t *n, struct rb_root *root)
+void timer_del (APP_TIMER_T *n, struct rb_root *root)
 {
 	sync_lock (&root->lock);
         rb_erase (&n->rlist, root);
+        RB_CLEAR_NODE(&n->rlist);
 	sync_unlock (&root->lock);
 }
 
-tmr_t * timer_tree_walk (struct rb_root  *root, unsigned int key, char flag)
+APP_TIMER_T * timer_tree_walk (struct rb_root  *root, unsigned int key, char flag)
 {
 	struct rb_node **p = NULL;
 	struct rb_node *parent = NULL;
-	tmr_t * timer = NULL;
+	APP_TIMER_T * timer = NULL;
 	unsigned int cmp = 0;
 
 	sync_lock (&root->lock);
@@ -135,12 +121,10 @@ tmr_t * timer_tree_walk (struct rb_root  *root, unsigned int key, char flag)
 
 		parent = *p;
 
-		timer = rb_entry (parent, tmr_t, rlist);
+		timer = rb_entry (parent, APP_TIMER_T, rlist);
 
-		if (flag & QUERY_TIMER_EXPIRY) 
-			cmp = timer->rt;
-		if (flag & QUERY_TIMER_INDEX)
-			cmp = timer->idx;
+		cmp = timer->rt;
+
 		if (key < cmp)
 			p = &(*p)->rb_left;
 		else if (key > cmp) 
@@ -154,27 +138,19 @@ tmr_t * timer_tree_walk (struct rb_root  *root, unsigned int key, char flag)
 	return NULL;
 }
 
-int timer_pending (int idx)
+int timer_pending (TIMER_T *p)
 {
-        tmr_t * p = query_timer_tree_by_index (idx);
-
         if (!p)
                 return 0;
 
-        if (IS_TMR_EXPD (p)) {
-                return 0;
-        }
-        /*Timer is still running*/
-        return 1;
+        return p->is_running;
 }
 
-unsigned int timer_get_remaining_time (int idx)
+unsigned int timer_get_remaining_time (TIMER_T *p)
 {
-        int t = 0;
+	int t = 0;
 
-        tmr_t * p = query_timer_tree_by_index (idx);
-
-        if (!p || IS_TMR_EXPD (p)) {
+        if (!p || !p->is_running) {
                 return 0;
         }
 
